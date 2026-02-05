@@ -3,7 +3,7 @@
 bl_info = {
     "name":         "BLeQ",
     "author":       "CMckarski",
-    "version":      (1, 0, 2),
+    "version":      (1, 0, 3),
     "blender":      (4, 2, 0),
     "location":     "View3D > Sidebar > External Tool",
     "description":  "Renderqueue / 3DHomePageCreator / Hardwaremonitor / Tools",

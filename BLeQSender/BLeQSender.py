@@ -40,6 +40,7 @@ def add_queue_file():
     item.filepath       = bpy.data.filepath
     item.scene_name     = bpy.context.scene.name           if bpy.context.scene else "None"
     item.camera_name    = bpy.context.scene.camera.name    if bpy.context.scene and bpy.context.scene.camera else "None"
+    item.name           = f"{bpy.path.display_name_from_filepath(bpy.data.filepath)}"
 
     new_idx             = len(wm.bleq_string_list) - 1
     target_idx          = min(idx + 1, new_idx)
@@ -52,7 +53,18 @@ def add_queue_file_last():
     item.filepath               = bpy.data.filepath
     item.scene_name             = bpy.context.scene.name           if bpy.context.scene else "None"
     item.camera_name            = bpy.context.scene.camera.name    if bpy.context.scene and bpy.context.scene.camera else "None"
+    item.name                   = f"{bpy.path.display_name_from_filepath(bpy.data.filepath)}"
     wm.bleq_string_list_index   = len(wm.bleq_string_list) - 1
+
+def add_queue_all_scenes():
+    wm = bpy.context.window_manager
+    for scene in bpy.data.scenes:
+        item                    = wm.bleq_string_list.add()
+        item.filepath           = bpy.data.filepath
+        item.scene_name         = scene.name
+        item.camera_name        = scene.camera.name if scene.camera else "None"
+        item.name               = f"{bpy.path.display_name_from_filepath(bpy.data.filepath)}"
+    wm.bleq_string_list_index   = 0
 
 def remove_queue_files():
     wm = bpy.context.window_manager
@@ -190,32 +202,53 @@ class BLEQ_OT_queue_render(bpy.types.Operator):
         
         log.logger.print_log(self)      
         return {'FINISHED'}
-    
+
+# register grouping
 _UTIL_CLASSES =(
     BLEQ_OT_queue_render,
+)
+
+_WM_PROPERTIES =(
+    {
+        "name":         "bleq_stop_requested",
+        "type":         "bool",
+        "description":  "BleQSender stop requested"
+    },
+    {
+        "name":         "bleq_queue_running",
+        "type":         "bool",
+        "description":  "BLeQSender is running"
+    },
 )
 
 def register():
     # classes
     for cls in _UTIL_CLASSES:
-        try:
-            bpy.utils.register_class(cls)
-        except RuntimeError as e:
-            print(f"Re-registering {cls.__name__}: {e}")
-            try:
-                bpy.utils.unregister_class(cls)
-                bpy.utils.register_class(cls)
-            except Exception as ex:
-                print(f"Failed to re-register {cls.__name__}: {ex}")
+        bpy.utils.register_class(cls)
 
-    bpy.types.WindowManager.bleq_stop_requested = bpy.props.BoolProperty(default=False)
-    bpy.types.WindowManager.bleq_queue_running  = bpy.props.BoolProperty(default=False)
+    for prop in _WM_PROPERTIES:
+        prop_name = prop["name"]
+        if not hasattr(bpy.types.WindowManager, prop_name):
+            print(f"register Property / BLeQSender / operator: {prop_name} is already registered. Will be overwritten")
+        if prop["type"] == "collection":
+            setattr(bpy.types.WindowManager, prop_name, bpy.props.CollectionProperty(type=prop["prop_type"]))
+        elif prop["type"] == "int":
+            setattr(bpy.types.WindowManager, prop_name, bpy.props.IntProperty(
+                name    =prop.get("description", ""),
+                default =prop.get("default", 0)))
+        elif prop["type"] == "bool":
+            setattr(bpy.types.WindowManager, prop_name, bpy.props.BoolProperty(
+                name        =prop.get("description", ""),
+                default     =prop.get("default", False),
+                description =prop.get("description", "")))
+
 
 def unregister():
-    del bpy.types.WindowManager.bleq_queue_running
-    del bpy.types.WindowManager.bleq_stop_requested
+    # Remove properties
+    for prop in reversed(_WM_PROPERTIES):
+        prop_name = prop["name"]
+        delattr(bpy.types.WindowManager, prop_name)
 
     # Unregister classes
     for cls in reversed(_UTIL_CLASSES):
-        if hasattr(bpy.types, cls.__name__):
-            bpy.utils.unregister_class(cls)
+        bpy.utils.unregister_class(cls)

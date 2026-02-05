@@ -40,32 +40,42 @@ class EXTERNAL_PT_bleq_sender(bpy.types.Panel):
 
         row             = layout.row()
         row.enabled     = rowenabler
-        row.template_list("BLEQ_UL_string_list", "", wm, "bleq_string_list", wm, "bleq_string_list_index")
+        row.template_list(
+            "BLEQ_UL_string_list",      # 1. UIList-Type
+            "",                         # 2. List-ID
+            wm,                         # 3. Dataobject list
+            "bleq_string_list",         # 4. Property-Name list
+            wm,                         # 5. Dataobject index
+            "bleq_string_list_index"    # 6. Property-Name index
+        )
 
         layout.separator()
+        row             = layout.row()
+        row.enabled     = rowenabler
+        row.operator("render.bleq_add"              , icon='ADD')
+        row             = layout.row()
+        row.enabled     = rowenabler
+        row.operator("render.bleq_add_last"         , icon='ADD')
+        row             = layout.row()
+        row.enabled     = rowenabler
+        row.operator("render.bleq_add_all_scenes"   , icon='ADD')
 
+        layout.separator()
         row             = layout.row()
         row.enabled     = rowenabler
-        row.operator("render.bleq_add"          , icon='ADD')
+        row.operator("render.bleq_remove_sel"       , icon='REMOVE')
         row             = layout.row()
         row.enabled     = rowenabler
-        row.operator("render.bleq_add_last"     , icon='ADD')
+        row.operator("render.bleq_remove_files"     , icon='REMOVE')
+
+        layout.separator()
         row             = layout.row()
         row.enabled     = rowenabler
-        row.operator("render.bleq_remove_sel"   , icon='REMOVE')
-        row             = layout.row()
-        row.enabled     = rowenabler
-        row.operator("render.bleq_remove_files" , icon='REMOVE')
-        row             = layout.row()
-        row.enabled     = rowenabler
-        row.separator()
-        row             = layout.row()
-        row.enabled     = rowenabler
-        row.operator("render.bleq_start"        , icon='PLAY')
+        row.operator("render.bleq_start"            , icon='PLAY')
         row             = layout.row()        
         row.enabled     = False
         row.alert       = not rowenabler
-        row.operator("render.bleq_stop"         , icon='QUIT')
+        row.operator("render.bleq_stop"             , icon='QUIT')
 
 class EXTERNAL_PT_blini_tools(bpy.types.Panel):
     bl_label        = "BLiniTools"
@@ -107,6 +117,7 @@ class EXTERNAL_PT_hardware_monitor(bpy.types.Panel):
         self.layout.label(text="Coming soon:")
         self.layout.label(text="Hardware monitoring in Blender")
 
+# register grouping
 _UTIL_CLASSES = (
     EXTERNAL_PT_SETUP,
     EXTERNAL_PT_bleq_sender,
@@ -118,15 +129,7 @@ _UTIL_CLASSES = (
 def register():
     # classes
     for cls in _UTIL_CLASSES:
-        try:
-            bpy.utils.register_class(cls)
-        except RuntimeError as e:
-            print(f"Re-registering {cls.__name__}: {e}")
-            try:
-                bpy.utils.unregister_class(cls)
-                bpy.utils.register_class(cls)
-            except Exception as ex:
-                print(f"Failed to re-register {cls.__name__}: {ex}")
+        bpy.utils.register_class(cls)
 
 def unregister():
     for cls in reversed(_UTIL_CLASSES):

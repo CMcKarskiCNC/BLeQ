@@ -42,6 +42,7 @@ class BLEQ_OT_mail(bpy.types.Operator):
         webbrowser.open(const.EXTERNAL_MAIL_SUP)
         return {'FINISHED'}
 
+# register grouping
 _UTIL_CLASSES =(
     BLEQ_OT_open_dllink,
     BLEQ_OT_open_website,
@@ -52,15 +53,8 @@ _UTIL_CLASSES =(
 def register():
     # classes
     for cls in _UTIL_CLASSES:
-        try:
-            bpy.utils.register_class(cls)
-        except RuntimeError as e:
-            print(f"Re-registering {cls.__name__}: {e}")
-            try:
-                bpy.utils.unregister_class(cls)
-                bpy.utils.register_class(cls)
-            except Exception as ex:
-                print(f"Failed to re-register {cls.__name__}: {ex}")
+        bpy.utils.register_class(cls)
+
 
 def unregister():
     for cls in reversed(_UTIL_CLASSES):

@@ -8,27 +8,41 @@ from .          import BLeQSender   as BSender
 
 # string item for the render queue list
 class BLEQ_StringItem(bpy.types.PropertyGroup):
-    filepath:    bpy.props.StringProperty(name="Filepath",    default="") # type: ignore
-    scene_name:  bpy.props.StringProperty(name="Scene",       default="") # type: ignore
-    camera_name: bpy.props.StringProperty(name="Camera",      default="") # type: ignore
+    filepath:       bpy.props.StringProperty(name="Filepath",   default="") # type: ignore
+    scene_name:     bpy.props.StringProperty(name="Scene",      default="") # type: ignore
+    camera_name:    bpy.props.StringProperty(name="Camera",     default="") # type: ignore
+    name:           bpy.props.StringProperty(name="Name",       default="") # type: ignore
 
 # string list UI
 class BLEQ_UL_string_list(bpy.types.UIList):
+    show_path:  bpy.props.BoolProperty( name="Show Path",   default=False,  description="Show filepath column")     # type: ignore
+    show_name:  bpy.props.BoolProperty( name="Show Name",   default=False,  description="Show Name column")         # type: ignore
+    show_cam:   bpy.props.BoolProperty( name="Show Cam",    default=True,   description="Show Camera column")       # type: ignore
+    show_scene: bpy.props.BoolProperty( name="Show Scene",  default=True,   description="Show Scene column")        # type: ignore
+
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         row = layout.row()
-        row.prop(item, "filepath",    text="", emboss=False)
-        row.prop(item, "scene_name",  text="", emboss=False)
-        row.prop(item, "camera_name", text="", emboss=False)
+        if self.show_path:
+            row.prop(item, "filepath",      text="", emboss=False)
+        if self.show_scene:
+            row.prop(item, "scene_name",    text="", emboss=False)
+        if self.show_cam:
+            row.prop(item, "camera_name",   text="", emboss=False)
+        if self.show_name:
+            row.prop(item, "name",          text="", emboss=False)
 
     def draw_filter(self, context, layout):
-        # no Filter-UI
-        pass
+        row = layout.row(align=True)
+        row.prop(self, "show_path",     text="Path",    toggle=True, icon='FILE_FOLDER')
+        row.prop(self, "show_scene",    text="Scene",   toggle=True, icon='SCENE_DATA')
+        row.prop(self, "show_cam",      text="Cam",     toggle=True, icon='CAMERA_DATA')
+        row.prop(self, "show_name",     text="Name",    toggle=True, icon='SORTALPHA')
 
     def filter_items(self, context, data, propname):
-        # no Filter-UI no sorting
         items = getattr(data, propname)
         return [], []
 
+# buttons
 class BUT_Add(bpy.types.Operator):
     bl_idname       = "render.bleq_add"
     bl_label        = "Add Behind"
@@ -64,6 +78,23 @@ class BUT_Add_Last(bpy.types.Operator):
         log.logger.print_log(self)
         return {'FINISHED'}
 
+class BUT_Add_Scenes(bpy.types.Operator):
+    bl_idname       = "render.bleq_add_all_scenes"
+    bl_label        = "Add All"
+    bl_description  = "Add all scenes (with selected cam)"
+
+    def execute(self, context):
+        if not bpy.data.filepath:
+            log.logger.add(log.LogStatus.WARNING, "File not saved - cannot add to queue.")
+            log.logger.print_log(self)
+            return {'CANCELLED'}
+
+        BSender.add_queue_all_scenes()
+        
+        log.logger.add(log.LogStatus.SUCCESS, "BLeQ Add Last button pressed.")
+        log.logger.print_log(self)
+        return {'FINISHED'}
+
 class BUT_Remove_Selected(bpy.types.Operator):
     bl_idname       = "render.bleq_remove_sel"
     bl_label        = "Remove selected"
@@ -94,8 +125,8 @@ class BUT_Start(bpy.types.Operator):
     bl_description  = "Start BLeQ render queue processing"
 
     def execute(self, context):
-        if not bpy.data.filepath:
-            log.logger.add(log.LogStatus.WARNING, "File not saved - cannot add to queue.")
+        if not bpy.data.filepath or bpy.data.is_dirty:
+            log.logger.add(log.LogStatus.WARNING, "File not saved - cannot start queue.")
             log.logger.print_log(self)
             return {'CANCELLED'}
 
@@ -117,11 +148,14 @@ class BUT_Stop(bpy.types.Operator):
         log.logger.print_log(self)
         return {'FINISHED'}
 
+
+# register grouping
 _UTIL_CLASSES =(
     BLEQ_StringItem,
     BLEQ_UL_string_list,
     BUT_Stop,
     BUT_Start,
+    BUT_Add_Scenes,
     BUT_Remove_Files,
     BUT_Remove_Selected,
     BUT_Add_Last,
@@ -151,41 +185,32 @@ _WM_PROPERTIES = (
 def register():
     # classes
     for cls in _UTIL_CLASSES:
-        try:
-            bpy.utils.register_class(cls)
-        except RuntimeError as e:
-            print(f"Re-registering {cls.__name__}: {e}")
-            try:
-                bpy.utils.unregister_class(cls)
-                bpy.utils.register_class(cls)
-            except Exception as ex:
-                print(f"Failed to re-register {cls.__name__}: {ex}")
+        bpy.utils.register_class(cls)
     
     # properties
     for prop in _WM_PROPERTIES:
         prop_name = prop["name"]
         if not hasattr(bpy.types.WindowManager, prop_name):
-            if prop["type"] == "collection":
-                setattr(bpy.types.WindowManager, prop_name, bpy.props.CollectionProperty(type=prop["prop_type"]))
-            elif prop["type"] == "int":
-                setattr(bpy.types.WindowManager, prop_name, bpy.props.IntProperty(
-                    name    =prop.get("description", ""),
-                    default =prop.get("default", 0)))
-            elif prop["type"] == "bool":
-                setattr(bpy.types.WindowManager, prop_name, bpy.props.BoolProperty(
-                    name        =prop.get("description", ""),
-                    default     =prop.get("default", False),
-                    description =prop.get("description", "")))
-        else:
-            print(f"register Property / BLeQSender / operator: {prop_name} is already registered.")
+            print(f"register Property / BLeQSender / operator: {prop_name} is already registered. Will be overwritten")
+        if prop["type"] == "collection":
+            setattr(bpy.types.WindowManager, prop_name, bpy.props.CollectionProperty(type=prop["prop_type"]))
+        elif prop["type"] == "int":
+            setattr(bpy.types.WindowManager, prop_name, bpy.props.IntProperty(
+                name    =prop.get("description", ""),
+                default =prop.get("default", 0)))
+        elif prop["type"] == "bool":
+            setattr(bpy.types.WindowManager, prop_name, bpy.props.BoolProperty(
+                name        =prop.get("description", ""),
+                default     =prop.get("default", False),
+                description =prop.get("description", "")))
+
 
 def unregister():
     # Remove properties
     for prop in reversed(_WM_PROPERTIES):
-        if hasattr(bpy.types.WindowManager, prop["name"]):
-            delattr(bpy.types.WindowManager, prop["name"])
+        prop_name = prop["name"]
+        delattr(bpy.types.WindowManager, prop_name)
     
     # Unregister classes
     for cls in reversed(_UTIL_CLASSES):
-        if hasattr(bpy.types, cls.__name__):
-            bpy.utils.unregister_class(cls)
+        bpy.utils.unregister_class(cls)
