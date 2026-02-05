@@ -1,4 +1,0 @@
-.gitignore
-BLeQ_Extension_org.sln
-BLeQ_Extension_org.pyproj
-.vs

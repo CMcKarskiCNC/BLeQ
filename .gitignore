@@ -365,3 +365,10 @@ FodyWeavers.xsd
 
 # manual additions below this line
 Ext_Org_ToDo.txt
+.gitattributes
+BLeQ_Extension_org.pyproj
+BLeQ_Extension_org.sln
+BLeQExtension_org.zip
+exclude.txt
+name.txt
+zipit.bat
