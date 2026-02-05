@@ -1,0 +1,15 @@
+schema_version		= "1.0.0"
+id					= "BLeQ_Extension"
+version				= "1.0.2"
+name				= "BLeQ"
+tagline				= "Renderqueue / 3DHomePage / Hardwaremonitor / Tools"
+maintainer			= "CMckarski <BLeQ@mail.gmx>"
+type				= "add-on"
+blender_version_min = "4.2.0"
+
+license = [
+  "SPDX:GPL-3.0-or-later"
+]
+
+website = "https://www.bleqapp.eu/"
+
