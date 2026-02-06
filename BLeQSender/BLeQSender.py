@@ -2,8 +2,8 @@
 
 import bpy  # type: ignore
 
-from ..Shared   import logger       as log
-from .          import operators    as ops
+from ..Shared   import constants        as const
+from ..Shared   import logger           as log
 
 # Module-level state for handler access
 _queue_state = {
@@ -95,8 +95,7 @@ class BLEQ_OT_queue_render(bpy.types.Operator):
         # Cancel Rendering
         if event.type == 'ESC' or wm.bleq_stop_requested:
             self.cancel(context)
-            log.logger.add(log.LogStatus.WARNING, "Queue rendering cancelled by user.")
-            log.logger.print_log(self) 
+            log.logger.add(log.LogStatus.WARNING, "Queue rendering cancelled by user.", "BLeQSender", log.LogReciever.BLonitor)
             return {'CANCELLED'}
         
         # Wait until render is done
@@ -121,8 +120,7 @@ class BLEQ_OT_queue_render(bpy.types.Operator):
                     if item.scene_name in bpy.data.scenes:
                         context.window.scene = bpy.data.scenes[item.scene_name]
                     else:
-                        log.logger.add(log.LogStatus.WARNING, f"Scene '{item.scene_name}' not found, skipping.")
-                        log.logger.print_log(self)
+                        log.logger.add(log.LogStatus.WARNING, f"Scene '{item.scene_name}' not found, skipping.", "BLeQSender", log.LogReciever.BLonitor)
                         return {'RUNNING_MODAL'}
                 
                 # Set camera
@@ -134,11 +132,10 @@ class BLEQ_OT_queue_render(bpy.types.Operator):
                         else:
                             return {'RUNNING_MODAL'}
                     else:
-                        log.logger.add(log.LogStatus.WARNING, f"Camera '{item.camera_name}' not found in scene '{context.scene.name}', skipping.")
+                        log.logger.add(log.LogStatus.WARNING, f"Camera '{item.camera_name}' not found in scene '{context.scene.name}', skipping.", "BLeQSender", log.LogReciever.BLonitor)
                         return {'RUNNING_MODAL'}
                 
-                log.logger.add(log.LogStatus.SUCCESS, f"Rendering {self._current_index + 1}/{len(wm.bleq_string_list)}: {item.scene_name}/{item.camera_name}")
-                log.logger.print_log(self)
+                log.logger.add(log.LogStatus.SUCCESS, f"Rendering {self._current_index + 1}/{len(wm.bleq_string_list)}: {item.scene_name}/{item.camera_name}", "BLeQSender", log.LogReciever.BLonitor)
 
                 _queue_state["is_rendering"] = True
                 
@@ -148,15 +145,14 @@ class BLEQ_OT_queue_render(bpy.types.Operator):
                 return {'RUNNING_MODAL'}
         
         self.cancel(context)
-        log.logger.add(log.LogStatus.SUCCESS, "Queue rendering completed.")
+        log.logger.add(log.LogStatus.SUCCESS, "Queue rendering completed.", "BLeQSender", log.LogReciever.BLonitor)
         return {'FINISHED'}
     
     def execute(self, context):
         wm = context.window_manager
         
         if not hasattr(wm, "bleq_string_list") or len(wm.bleq_string_list) == 0:
-            log.logger.add(log.LogStatus.WARNING, "Render queue is empty.")
-            log.logger.print_log(self)
+            log.logger.add(log.LogStatus.WARNING, "Render queue is empty.", "BLeQSender", log.LogReciever.BLonitor)
             return {'CANCELLED'}
         
         self._current_index             = wm.bleq_string_list_index
@@ -177,8 +173,7 @@ class BLEQ_OT_queue_render(bpy.types.Operator):
         if _on_render_cancel not in bpy.app.handlers.render_cancel:
             bpy.app.handlers.render_cancel.append(_on_render_cancel)
 
-        log.logger.add(log.LogStatus.SUCCESS, "Render started.")
-        log.logger.print_log(self)      
+        log.logger.add(log.LogStatus.SUCCESS, "Render started.", "BLeQSender", log.LogReciever.BLonitor)    
         return {'RUNNING_MODAL'}
  
     def cancel(self, context):
@@ -199,8 +194,7 @@ class BLEQ_OT_queue_render(bpy.types.Operator):
             bpy.app.handlers.render_complete.remove(_on_render_complete)
         if _on_render_cancel in bpy.app.handlers.render_cancel:
             bpy.app.handlers.render_cancel.remove(_on_render_cancel)
-        
-        log.logger.print_log(self)      
+            
         return {'FINISHED'}
 
 # register grouping
@@ -211,44 +205,21 @@ _UTIL_CLASSES =(
 _WM_PROPERTIES =(
     {
         "name":         "bleq_stop_requested",
+        "UI_Name":      "Queue Stop Req",
         "type":         "bool",
         "description":  "BleQSender stop requested"
     },
     {
         "name":         "bleq_queue_running",
+        "UI_Name":      "Queue Running",
         "type":         "bool",
         "description":  "BLeQSender is running"
     },
 )
 
+# registration
 def register():
-    # classes
-    for cls in _UTIL_CLASSES:
-        bpy.utils.register_class(cls)
-
-    for prop in _WM_PROPERTIES:
-        prop_name = prop["name"]
-        if not hasattr(bpy.types.WindowManager, prop_name):
-            print(f"register Property / BLeQSender / operator: {prop_name} is already registered. Will be overwritten")
-        if prop["type"] == "collection":
-            setattr(bpy.types.WindowManager, prop_name, bpy.props.CollectionProperty(type=prop["prop_type"]))
-        elif prop["type"] == "int":
-            setattr(bpy.types.WindowManager, prop_name, bpy.props.IntProperty(
-                name    =prop.get("description", ""),
-                default =prop.get("default", 0)))
-        elif prop["type"] == "bool":
-            setattr(bpy.types.WindowManager, prop_name, bpy.props.BoolProperty(
-                name        =prop.get("description", ""),
-                default     =prop.get("default", False),
-                description =prop.get("description", "")))
-
+    const.regfunction(_UTIL_CLASSES, _WM_PROPERTIES)
 
 def unregister():
-    # Remove properties
-    for prop in reversed(_WM_PROPERTIES):
-        prop_name = prop["name"]
-        delattr(bpy.types.WindowManager, prop_name)
-
-    # Unregister classes
-    for cls in reversed(_UTIL_CLASSES):
-        bpy.utils.unregister_class(cls)
+    const.unregfunction(_UTIL_CLASSES, _WM_PROPERTIES)

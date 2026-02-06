@@ -1,21 +1,33 @@
 # -*- coding: utf-8 -*-
 
-from pyexpat.errors import messages
+
 import queue
 import bpy      # type: ignore
 
-from enum   import Enum
-from re     import DEBUG
-from .      import constants as const
+from enum       import Enum
+from .          import constants as const
+from ..BLonitor import BLonitor
 
 LocalDEBUG = True
 
+# types
 class LogStatus(str, Enum):
     SUCCESS         = "success"
     WARNING         = "warning"
     ERROR           = "error"
     BLENDER_ERROR   = "Blender error"
 
+class LogSender(str, Enum):
+    BLEQ_APP        = "BleQ"
+    BL_OPS          = "Blender"
+
+class LogReciever(str, Enum):
+    BLENDER_UI      = "Blender UI"
+    BLonitor        = "BLonitor"
+    BLEQ            = "BleQ"
+    ALL             = "All"
+
+# logger
 class logger():
     LogQ = queue.Queue()
  
@@ -28,8 +40,18 @@ class logger():
                 break
     
     @staticmethod
-    def add(status: LogStatus, message: str):
-        logger.LogQ.put((status, message))
+    def add(status: LogStatus, message: str, sender: LogSender = None, reciever: LogReciever = None):
+        # set optionals
+        if not sender:
+            sender = "Unknown"
+        if not reciever:
+            reciever = LogReciever.ALL
+        # blender UI
+        if reciever == LogReciever.BLENDER_UI or reciever == LogReciever.ALL:
+            logger.LogQ.put((status, message))
+        # BLonitor
+        if reciever == LogReciever.BLonitor or reciever == LogReciever.ALL:
+            BLonitor.add_blonitor_message(sender, status, message)
 
     @staticmethod
     def print_log(operator=None):      

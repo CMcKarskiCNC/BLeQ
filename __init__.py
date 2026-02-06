@@ -3,7 +3,7 @@
 bl_info = {
     "name":         "BLeQ",
     "author":       "CMckarski",
-    "version":      (1, 0, 3),
+    "version":      (1, 0, 4),
     "blender":      (4, 2, 0),
     "location":     "View3D > Sidebar > External Tool",
     "description":  "Renderqueue / 3DHomePageCreator / Hardwaremonitor / Tools",
@@ -11,16 +11,22 @@ bl_info = {
     "license":      "GPL-3.0-or-later",
 }
 
-from .Shared        import constants    as const
-from .BleQSetup     import operators    as setup_operators
-from .BLeQSender    import operators    as sender_operators
-from .BLeQSender    import BLeQSender   as bleq_sender
+import bpy # type: ignore
+
 from .Shared        import panels
-from .Shared        import logger       as log
+
+from .BleQSetup     import BLeQSetup_ops    as setup_operators
+
+from .BLeQSender    import BLeQSender_ops   as sender_operators
+from .BLeQSender    import BLeQSender       as bleq_sender
+
+from .BLonitor      import BLonitor         as blonitor
+
 
 _MODULES = (
     setup_operators,
     sender_operators,
+    blonitor,
     bleq_sender,
     panels,
 )

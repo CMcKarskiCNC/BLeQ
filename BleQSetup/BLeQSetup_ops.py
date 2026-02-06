@@ -51,11 +51,7 @@ _UTIL_CLASSES =(
 )
 
 def register():
-    # classes
-    for cls in _UTIL_CLASSES:
-        bpy.utils.register_class(cls)
-
+    const.regfunction(_UTIL_CLASSES)
 
 def unregister():
-    for cls in reversed(_UTIL_CLASSES):
-        bpy.utils.unregister_class(cls)
+    const.unregfunction(_UTIL_CLASSES)
