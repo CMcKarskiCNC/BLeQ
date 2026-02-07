@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
-import queue
-import bpy      # type: ignore
-
-from enum       import Enum
-from .          import constants as const
-from ..BLonitor import BLonitor
+from collections    import deque
+from enum           import Enum
+from .              import constants as const
+from ..BLonitor     import BLonitor
 
 LocalDEBUG = True
 
@@ -29,15 +27,11 @@ class LogReciever(str, Enum):
 
 # logger
 class logger():
-    LogQ = queue.Queue()
+    LogQ = deque()
  
     @staticmethod
     def clear():
-        while not logger.LogQ.empty():
-            try:
-                logger.LogQ.get_nowait()
-            except queue.Empty:
-                break
+        logger.LogQ.clear()
     
     @staticmethod
     def add(status: LogStatus, message: str, sender: LogSender = None, reciever: LogReciever = None):
@@ -48,7 +42,7 @@ class logger():
             reciever = LogReciever.ALL
         # blender UI
         if reciever == LogReciever.BLENDER_UI or reciever == LogReciever.ALL:
-            logger.LogQ.put((status, message))
+            logger.LogQ.append((status, message))
         # BLonitor
         if reciever == LogReciever.BLonitor or reciever == LogReciever.ALL:
             BLonitor.add_blonitor_message(sender, status, message)
@@ -57,10 +51,10 @@ class logger():
     def print_log(operator=None):      
         # Get all messages from the queue
         messages = []
-        while not logger.LogQ.empty():
+        while logger.LogQ:
             try:
-                messages.append(logger.LogQ.get_nowait())
-            except queue.Empty:
+                messages.append(logger.LogQ.popleft())
+            except:
                 break
         if not messages:
             if const.DEBUG_MODE or LocalDEBUG:

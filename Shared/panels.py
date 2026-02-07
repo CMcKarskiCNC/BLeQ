@@ -17,12 +17,13 @@ class BLEQ_PT_setup_panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
 
-        layout.label(text="BLeQ App:")
-        layout.operator("external.open_bleq_website",    icon='URL')
-        layout.operator("external.open_bleq_dllink",     icon='URL')
+        layout.label(text="BLeQ Tutorial:")
+        row         = layout.row()
+        row.enabled = False
+        row.operator("bleq.open_bleq_tutorial",         icon='URL')
         layout.label(text="Git / Support:")
-        layout.operator("external.open_git_website",     icon='URL')
-        layout.operator("external.open_support_email",   icon='QUESTION')
+        layout.operator("bleq.open_git_website",        icon='URL')
+        layout.operator("bleq.open_support_email",      icon='QUESTION')
 
 class BLEQ_PT_bleqsender_panel(bpy.types.Panel):
     bl_idname       = "BLEQ_PT_01_bleqsender_panel"

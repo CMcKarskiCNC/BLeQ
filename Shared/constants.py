@@ -6,7 +6,7 @@ from enum   import Enum
 
 # Links
 EXTERNAL_DL_URL     = "https://apps.microsoft.com/detail/9n6lbd4t985r?hl=de-DE&gl=DE"
-EXTERNAL_WB_URL     = "https://www.bleqapp.eu/"
+EXTERNAL_WB_TUT     = ""
 EXTERNAL_WB_GIT     = "https://github.com/CMcKarskiCNC/BLeQ"
 EXTERNAL_MAIL_SUP   = "mailto:BLeQ@mail.gmx"
 

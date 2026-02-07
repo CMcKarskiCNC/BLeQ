@@ -1,6 +1,6 @@
 schema_version		= "1.0.0"
 id					= "BLeQ_Extension"
-version				= "1.0.4"
+version				= "1.0.5"
 name				= "BLeQ"
 tagline				= "Renderqueue / 3DHomePage / Hardwaremonitor / Tools"
 maintainer			= "CMckarski <BLeQ@mail.gmx>"
